@@ -111,6 +111,7 @@ static int write_blockheader(uint32_t flags,
 {
 	struct header hdr;
 	void *cur = &hdr;
+	char buf[0x20];
 
 	flags <<= 16;
 	flags |= (~flags & 0xffff0000) >> 16;
@@ -122,8 +123,14 @@ static int write_blockheader(uint32_t flags,
 	hdr.loadaddr = HOST_TO_BE32(loadaddr);
 	hdr.entryp = HOST_TO_BE32(entryp);
 
-	for (cur += 4; cur - (void *)&hdr < BLKHDR_LEN; cur += 2)
+	for (cur += 4; cur - (void *)&hdr < BLKHDR_LEN; cur += 2) {
 		cksum += HOST_TO_LE16(*(uint16_t *)cur);
+		/*
+		 * workaround of unknown bug if built with gcc 9.4.0
+		 * (Ubuntu 9.4.0-1ubuntu1~20.04.2) and cmake
+		 */
+		snprintf(buf, sizeof(buf), "%u", cksum);
+	}
 
 	cksum = 0xffff ^ cksum % 0xffff;
 	hdr.cksum = HOST_TO_LE32(cksum);
