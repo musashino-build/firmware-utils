@@ -91,7 +91,7 @@ static int write_data(const char *buf, size_t length, uint32_t *cksum)
 	if (cksum)
 		for (pos = 0; pos < length; pos += 2) {
 			if (length - pos == 1)
-				*cksum += buf[pos];
+				*cksum += HOST_TO_LE16(buf[pos]);
 			else
 				*cksum += HOST_TO_LE16(*(uint16_t *)(buf + pos));
 		}
