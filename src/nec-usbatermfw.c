@@ -224,30 +224,6 @@ int main(int argc, char **argv)
 		return -EACCES;
 	}
 
-	while((c = getopt(argc, argv, "f:a:e:d:t:")) != -1) {
-		switch (c) {
-		case 't':
-			ftlen = snprintf(buf, sizeof(buf), "Binary Type%s File END \r\n", optarg);
-			if (ftlen > FILETYPE_LEN) {
-				fprintf(stderr, "specified type is too long\n");
-				ret = -EINVAL;
-				goto exit;
-			}
-			memset(ftype, 0xff, FILETYPE_LEN);
-			strncpy(ftype + (FILETYPE_LEN - ftlen), buf, ftlen);
-			break;
-		case '?':
-			ret = -EINVAL;
-			goto exit;
-		}
-	}
-
-	if (!ftlen) {
-		fprintf(stderr, "no file type specified\n");
-		ret = -EINVAL;
-		goto exit;
-	}
-
 	/* add firmware header */
 	sprintf(buf, "USB ATERMWL3050");
 	memset(buf + 0x10, 0xff, 0x10);
@@ -263,8 +239,7 @@ int main(int argc, char **argv)
 	if (ret)
 		goto exit;
 
-	/* parse/write user-defined data blocks */
-	optind = 1;
+	/* set type and parse/write user-defined data blocks */
 	while((c = getopt(argc, argv, "f:a:e:d:t:")) != -1) {
 		switch (c) {
 		case 'f':
@@ -304,12 +279,26 @@ int main(int argc, char **argv)
 			entryp = BLKHDR_DEF_ENTRYP;
 			break;
 		case 't':
+			ftlen = snprintf(buf, sizeof(buf), "Binary Type%s File END \r\n", optarg);
+			if (ftlen > FILETYPE_LEN) {
+				fprintf(stderr, "specified type is too long\n");
+				ret = -EINVAL;
+				goto exit;
+			}
+			memset(ftype, 0xff, FILETYPE_LEN);
+			strncpy(ftype + (FILETYPE_LEN - ftlen), buf, ftlen);
 			break;
 		case '?':
 		default:
 			ret = -EINVAL;
 			goto exit;
 		}
+	}
+
+	if (!ftlen) {
+		fprintf(stderr, "no file type specified\n");
+		ret = -EINVAL;
+		goto exit;
 	}
 
 	/* append end block */
