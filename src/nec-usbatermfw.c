@@ -233,7 +233,7 @@ int main(int argc, char **argv)
 
 	printf("\tFlags\tTotal Len.\tLoad Addr\tEntry Point\tChecksum\n");
 
-	/* add copyright block */
+	/* add version/copyright block */
 	ret = sprintf(buf, "VERSION: 9.99.99\nOEM1 VERSION: 9.9.99\n");
 	ret = append_datablock_from_buf(0x0, 0x0, 0x0, buf, ret);
 	if (ret)
