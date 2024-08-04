@@ -99,7 +99,6 @@ static int write_blockheader(uint32_t flags,
 {
 	struct header hdr;
 	uint16_t *cur = (uint16_t *)&hdr;
-	const uint16_t *end = cur + (BLKHDR_LEN / sizeof(uint16_t));
 	char buf[0x20];
 
 	flags <<= 16;
@@ -113,7 +112,7 @@ static int write_blockheader(uint32_t flags,
 	hdr.entryp = htobe32(entryp);
 
 	for (cur += 2; cur - (uint16_t *)&hdr < BLKHDR_LEN / 2; cur++) {
-		cksum += htole32(*cur);
+		cksum += htole16(*cur);
 		/*
 		 * workaround of unknown bug if built with gcc 9.4.0
 		 * (Ubuntu 9.4.0-1ubuntu1~20.04.2) and cmake
