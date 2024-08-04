@@ -66,7 +66,7 @@ static void usage(void)
 	       DATABLK_CNT_MAX);
 }
 
-static int strtou32(char *arg, unsigned int *val)
+static int strtou32(char *arg, uint32_t *val)
 {
 	char *endptr = NULL;
 
