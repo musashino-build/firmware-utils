@@ -27,18 +27,6 @@
 #define PADBLK_LEN		0x4
 #define DATABLK_CNT_MAX		2
 
-#if (__BYTE_ORDER == __LITTLE_ENDIAN)
-#  define HOST_TO_LE16(x)	(x)
-#  define HOST_TO_LE32(x)	(x)
-#  define HOST_TO_BE16(x)	bswap_16(x)
-#  define HOST_TO_BE32(x)	bswap_32(x)
-#else
-#  define HOST_TO_LE16(x)	bswap_16(x)
-#  define HOST_TO_LE32(x)	bswap_32(x)
-#  define HOST_TO_BE16(x)	(x)
-#  define HOST_TO_BE32(x)	(x)
-#endif
-
 struct header
 {
 	uint32_t flags;
@@ -91,9 +79,9 @@ static int write_data(const char *buf, size_t length, uint32_t *cksum)
 	if (cksum)
 		for (pos = 0; pos < length; pos += 2) {
 			if (length - pos == 1)
-				*cksum += HOST_TO_LE16(buf[pos]);
+				*cksum += le16toh(buf[pos]);
 			else
-				*cksum += HOST_TO_LE16(*(uint16_t *)(buf + pos));
+				*cksum += le16toh(*(uint16_t *)(buf + pos));
 		}
 
 	if (padlen) {
@@ -111,20 +99,21 @@ static int write_blockheader(uint32_t flags,
 {
 	struct header hdr;
 	uint16_t *cur = (uint16_t *)&hdr;
+	const uint16_t *end = cur + (BLKHDR_LEN / sizeof(uint16_t));
 	char buf[0x20];
 
 	flags <<= 16;
 	flags |= (~flags & 0xffff0000) >> 16;
 
-	hdr.flags = HOST_TO_BE32(flags);
-	hdr.totlen = HOST_TO_BE32(BLKHDR_LEN + datalen);
-	hdr.hdrlen = HOST_TO_BE32(BLKHDR_LEN);
+	hdr.flags = htobe32(flags);
+	hdr.totlen = htobe32(BLKHDR_LEN + datalen);
+	hdr.hdrlen = htobe32(BLKHDR_LEN);
 	hdr.cksum = 0;
-	hdr.loadaddr = HOST_TO_BE32(loadaddr);
-	hdr.entryp = HOST_TO_BE32(entryp);
+	hdr.loadaddr = htobe32(loadaddr);
+	hdr.entryp = htobe32(entryp);
 
 	for (cur += 2; cur - (uint16_t *)&hdr < BLKHDR_LEN / 2; cur++) {
-		cksum += HOST_TO_LE16(*cur);
+		cksum += htole32(*cur);
 		/*
 		 * workaround of unknown bug if built with gcc 9.4.0
 		 * (Ubuntu 9.4.0-1ubuntu1~20.04.2) and cmake
@@ -133,7 +122,7 @@ static int write_blockheader(uint32_t flags,
 	}
 
 	cksum = 0xffff ^ cksum % 0xffff;
-	hdr.cksum = HOST_TO_LE32(cksum);
+	hdr.cksum = htole32(cksum);
 
 	if (datalen)
 		fseek(outbin, -(BLKHDR_LEN + datalen + padlen), SEEK_CUR);
